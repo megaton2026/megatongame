@@ -107,8 +107,14 @@
     <div class="tagline">Злови деталі МЕГАТОН і не пропусти жодного протікання. Керуй колектором вліво-вправо!</div>
     <div class="rules">
       <div class="item">
-        <svg width="30" height="22" viewBox="0 0 200 140"><path d="M80,20 C98.7,10 116.3,30 135,20 C153.7,10 171.3,30 190,20" stroke="#E53131" stroke-width="18" stroke-linecap="round" fill="none"/><path d="M40,60 C65.5,48 89.5,72 115,60 C140.5,48 164.5,72 190,60" stroke="#E53131" stroke-width="18" stroke-linecap="round" fill="none"/><path d="M0,100 C32.3,86 62.7,114 95,100 C127.3,86 157.7,114 190,100" stroke="#E53131" stroke-width="18" stroke-linecap="round" fill="none"/></svg>
-        <small>Лови деталі — це очки</small>
+        <svg width="34" height="22" viewBox="0 0 60 34">
+          <rect x="6" y="9" width="34" height="16" rx="4" fill="#d8d9d6"/>
+          <rect x="0" y="13" width="8" height="8" fill="#6C6E6B"/>
+          <rect x="40" y="13" width="8" height="8" fill="#6C6E6B"/>
+          <rect x="21" y="-1" width="8" height="16" rx="3" fill="#E53131" transform="rotate(-12 25 7)"/>
+          <circle cx="23" cy="9" r="3" fill="#4d4e4c"/>
+        </svg>
+        <small>Лови крани й фітинги — це очки</small>
       </div>
       <div class="item">
         <svg width="22" height="26" viewBox="0 0 40 48"><path d="M20 2 C20 2 4 22 4 32 A16 16 0 0 0 36 32 C36 22 20 2 20 2 Z" fill="#2f6fd6"/></svg>
@@ -182,16 +188,8 @@
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', function(){ setTimeout(resize, 200); });
 
-  function waveIconPath(scale){
-    var s = scale;
-    var p1 = new Path2D("M"+80*s+","+20*s+" C"+98.7*s+","+10*s+" "+116.3*s+","+30*s+" "+135*s+","+20*s+" C"+153.7*s+","+10*s+" "+171.3*s+","+30*s+" "+190*s+","+20*s);
-    var p2 = new Path2D("M"+40*s+","+60*s+" C"+65.5*s+","+48*s+" "+89.5*s+","+72*s+" "+115*s+","+60*s+" C"+140.5*s+","+48*s+" "+164.5*s+","+72*s+" "+190*s+","+60*s);
-    var p3 = new Path2D("M"+0*s+","+100*s+" C"+32.3*s+","+86*s+" "+62.7*s+","+114*s+" "+95*s+","+100*s+" C"+127.3*s+","+86*s+" "+157.7*s+","+114*s+" "+190*s+","+100*s);
-    return [p1,p2,p3];
-  }
-
-  // Player (collector)
-  var player = { x:0, y:0, w:74, h:20, targetX:0 };
+  // Player (collector — теплої підлоги колектор)
+  var player = { x:0, y:0, w:78, h:20, targetX:0 };
 
   // Game state
   var state = 'idle'; // idle | playing | over
@@ -315,16 +313,37 @@
     var x = player.x, y = player.y, w = player.w, h = player.h;
     ctx.save();
     ctx.translate(x,y);
-    var grad = ctx.createLinearGradient(-w/2,0,w/2,0);
-    grad.addColorStop(0, COLORS.redDark);
-    grad.addColorStop(0.5, COLORS.red);
-    grad.addColorStop(1, COLORS.redDark);
+
+    // outlet stubs (сервоприводи/вентилі колектора), намальовані до основної труби
+    var n = 4;
+    for(var i=0;i<n;i++){
+      var sx = -w*0.32 + i*(w*0.64/(n-1));
+      ctx.fillStyle = '#8f918e';
+      roundRect(sx-2.5, -h/2-8, 5, 9, 1.5); ctx.fill();
+      ctx.fillStyle = COLORS.red;
+      ctx.beginPath(); ctx.arc(sx, -h/2-9, 3.4, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.beginPath(); ctx.arc(sx-1, -h/2-10.2, 1, 0, Math.PI*2); ctx.fill();
+    }
+
+    // основна труба колектора (нержавіюча сталь)
+    var grad = ctx.createLinearGradient(-w/2,-h/2,-w/2,h/2);
+    grad.addColorStop(0, '#eef0ee');
+    grad.addColorStop(0.45, '#aeb0ad');
+    grad.addColorStop(0.55, '#8d8f8c');
+    grad.addColorStop(1, '#6f716e');
     ctx.fillStyle = grad;
-    roundRect(-w/2,-h/2,w,h,8);
+    roundRect(-w/2,-h/2,w,h,7);
     ctx.fill();
-    ctx.fillStyle = '#2a2b2d';
-    ctx.beginPath(); ctx.arc(-w/2, 0, 7, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(w/2, 0, 7, 0, Math.PI*2); ctx.fill();
+
+    // торцеві заглушки
+    ctx.fillStyle = '#54554f';
+    ctx.beginPath(); ctx.arc(-w/2, 0, h*0.42, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(w/2, 0, h*0.42, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#8d8f8c';
+    ctx.beginPath(); ctx.arc(-w/2, 0, h*0.42*0.5, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(w/2, 0, h*0.42*0.5, 0, Math.PI*2); ctx.fill();
+
     ctx.restore();
   }
 
@@ -344,19 +363,66 @@
       ctx.save();
       ctx.translate(it.x, it.y);
       ctx.rotate(it.rot);
-      var s = it.size / 190;
       if(it.type === 'bad'){
         drawLeak(it.size);
+      } else if(it.type === 'bonus'){
+        drawFitting(it.size);
       } else {
-        ctx.translate(-it.size*0.5, -it.size*0.35);
-        var paths = waveIconPath(s);
-        ctx.strokeStyle = it.type === 'bonus' ? '#f2c14e' : COLORS.red;
-        ctx.lineWidth = 16*s;
-        ctx.lineCap = 'round';
-        for(var p=0;p<paths.length;p++) ctx.stroke(paths[p]);
+        drawValve(it.size);
       }
       ctx.restore();
     }
+  }
+
+  function drawValve(size){
+    var s = size/40;
+    ctx.save();
+    ctx.scale(s,s);
+    var body = ctx.createLinearGradient(-16,0,16,0);
+    body.addColorStop(0,'#8b8d8a');
+    body.addColorStop(0.5,'#e2e3e0');
+    body.addColorStop(1,'#8b8d8a');
+    ctx.fillStyle = body;
+    roundRect(-14,-8,28,16,5); ctx.fill();
+    ctx.fillStyle = '#6C6E6B';
+    ctx.fillRect(-22,-4,8,8);
+    ctx.fillRect(14,-4,8,8);
+    ctx.save();
+    ctx.translate(0,-9);
+    ctx.rotate(-0.18);
+    ctx.fillStyle = COLORS.red;
+    roundRect(-4,-13,8,15,3); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#4d4e4c';
+    ctx.beginPath(); ctx.arc(0,-8,3.2,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawHex(cx,cy,r,fill,stroke){
+    ctx.beginPath();
+    for(var i=0;i<6;i++){
+      var ang = Math.PI/6 + i*Math.PI/3;
+      var px = cx + r*Math.cos(ang), py = cy + r*Math.sin(ang);
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.strokeStyle = stroke; ctx.lineWidth = 1.4; ctx.stroke();
+  }
+
+  function drawFitting(size){
+    var s = size/40;
+    ctx.save();
+    ctx.scale(s,s);
+    var body = ctx.createLinearGradient(-12,0,12,0);
+    body.addColorStop(0,'#8a6d1f');
+    body.addColorStop(0.5,'#e8c766');
+    body.addColorStop(1,'#8a6d1f');
+    ctx.fillStyle = body;
+    roundRect(-11,-6.5,22,13,3); ctx.fill();
+    drawHex(-17,0,9,'#d1ab48','#6b530f');
+    drawHex(17,0,9,'#d1ab48','#6b530f');
+    ctx.restore();
   }
 
   function drawLeak(size){
