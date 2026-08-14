@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>МЕГАТОН — Злови деталь!</title>
+<style>
+  :root{
+    --red: #E53131;
+    --red-dark: #B72221;
+    --gray: #6C6E6B;
+    --bg: #17181a;
+    --panel: #ffffff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    background:var(--bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    overscroll-behavior:none;
+    touch-action:none;
+    user-select:none;
+  }
+  #app{
+    position:fixed;inset:0;
+    display:flex;flex-direction:column;
+    max-width:480px;margin:0 auto;
+    background:
+      radial-gradient(120% 60% at 50% 0%, #232426 0%, #17181a 60%),
+      var(--bg);
+    overflow:hidden;
+  }
+  .brand{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+  }
+  .brand svg{ display:block; }
+  .wordmark{ display:flex; flex-direction:column; line-height:1; text-align:left; }
+  .wordmark b{
+    font-size:26px; letter-spacing:1px; color:var(--red);
+    font-weight:900; font-style:normal;
+  }
+  .wordmark span{
+    font-size:9px; letter-spacing:2.5px; color:var(--gray);
+    font-weight:700; margin-top:4px;
+  }
+  .screen{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:22px; padding:24px; text-align:center;
+    background:linear-gradient(180deg, rgba(23,24,26,.0), rgba(23,24,26,.0));
+  }
+  .hidden{ display:none !important; }
+  .tagline{ color:#c9cac8; font-size:15px; max-width:300px; }
+  .btn{
+    appearance:none; border:none; cursor:pointer;
+    background:var(--red); color:#fff; font-weight:800; font-size:17px;
+    letter-spacing:.5px; padding:14px 36px; border-radius:10px;
+    box-shadow:0 6px 0 var(--red-dark), 0 10px 18px rgba(229,49,49,.25);
+    transition:transform .05s ease;
+  }
+  .btn:active{ transform:translateY(4px); box-shadow:0 2px 0 var(--red-dark); }
+  .btn.secondary{
+    background:#2a2b2d; box-shadow:0 6px 0 #101111;
+    color:#e8e8e8;
+  }
+  .rules{
+    display:flex; gap:22px; margin-top:4px;
+  }
+  .rules .item{ display:flex; flex-direction:column; align-items:center; gap:6px; width:90px; }
+  .rules .item small{ color:#9a9b99; font-size:11.5px; line-height:1.3; }
+  #gameScreen{ inset:0; padding:0; justify-content:flex-start; }
+  #hud{
+    position:absolute; top:0; left:0; right:0; z-index:5;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 16px; pointer-events:none;
+  }
+  #score{ color:#fff; font-weight:900; font-size:22px; letter-spacing:.5px; }
+  #score span{ color:var(--red); }
+  #lives{ display:flex; gap:6px; }
+  #best{
+    position:absolute; top:14px; left:50%; transform:translateX(-50%);
+    color:#8d8e8c; font-size:11px; letter-spacing:1px; font-weight:700; z-index:5;
+  }
+  canvas{ display:block; width:100%; height:100%; touch-action:none; }
+  #finalScore{ font-size:52px; font-weight:900; color:#fff; }
+  #finalScore span{ display:block; font-size:13px; font-weight:700; letter-spacing:2px; color:var(--gray); margin-bottom:6px; }
+  #bestRow{ color:#9a9b99; font-size:13px; }
+  .footer-note{
+    position:absolute; bottom:10px; left:0; right:0; text-align:center;
+    color:#54554f; font-size:10.5px; letter-spacing:1px; z-index:5; pointer-events:none;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- START SCREEN -->
+  <div class="screen" id="startScreen">
+    <div class="brand">
+      <svg width="52" height="40" viewBox="0 0 200 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M80,20 C98.7,10 116.3,30 135,20 C153.7,10 171.3,30 190,20" stroke="#E53131" stroke-width="16" stroke-linecap="round"/>
+        <path d="M40,60 C65.5,48 89.5,72 115,60 C140.5,48 164.5,72 190,60" stroke="#E53131" stroke-width="16" stroke-linecap="round"/>
+        <path d="M0,100 C32.3,86 62.7,114 95,100 C127.3,86 157.7,114 190,100" stroke="#E53131" stroke-width="16" stroke-linecap="round"/>
+      </svg>
+      <div class="wordmark"><b>МЕГАТОН</b><span>ІНЖЕНЕРНІ РІШЕННЯ</span></div>
+    </div>
+    <div class="tagline">Злови деталі МЕГАТОН і не пропусти жодного протікання. Керуй колектором вліво-вправо!</div>
+    <div class="rules">
+      <div class="item">
+        <svg width="30" height="22" viewBox="0 0 200 140"><path d="M80,20 C98.7,10 116.3,30 135,20 C153.7,10 171.3,30 190,20" stroke="#E53131" stroke-width="18" stroke-linecap="round" fill="none"/><path d="M40,60 C65.5,48 89.5,72 115,60 C140.5,48 164.5,72 190,60" stroke="#E53131" stroke-width="18" stroke-linecap="round" fill="none"/><path d="M0,100 C32.3,86 62.7,114 95,100 C127.3,86 157.7,114 190,100" stroke="#E53131" stroke-width="18" stroke-linecap="round" fill="none"/></svg>
+        <small>Лови деталі — це очки</small>
+      </div>
+      <div class="item">
+        <svg width="22" height="26" viewBox="0 0 40 48"><path d="M20 2 C20 2 4 22 4 32 A16 16 0 0 0 36 32 C36 22 20 2 20 2 Z" fill="#2f6fd6"/></svg>
+        <small>Уникай протікань — це життя</small>
+      </div>
+    </div>
+    <button class="btn" id="startBtn">Почати гру</button>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div class="screen hidden" id="gameScreen">
+    <div id="hud">
+      <div id="score">0<span id="scoreUnit"></span></div>
+      <div id="lives"></div>
+    </div>
+    <div id="best"></div>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <!-- GAME OVER SCREEN -->
+  <div class="screen hidden" id="overScreen">
+    <div class="brand">
+      <svg width="34" height="26" viewBox="0 0 200 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M80,20 C98.7,10 116.3,30 135,20 C153.7,10 171.3,30 190,20" stroke="#E53131" stroke-width="16" stroke-linecap="round"/>
+        <path d="M40,60 C65.5,48 89.5,72 115,60 C140.5,48 164.5,72 190,60" stroke="#E53131" stroke-width="16" stroke-linecap="round"/>
+        <path d="M0,100 C32.3,86 62.7,114 95,100 C127.3,86 157.7,114 190,100" stroke="#E53131" stroke-width="16" stroke-linecap="round"/>
+      </svg>
+      <div class="wordmark"><b style="font-size:20px">МЕГАТОН</b></div>
+    </div>
+    <div id="finalScore"><span>ГРУ ЗАВЕРШЕНО</span>0</div>
+    <div id="bestRow">Рекорд: <b id="bestVal">0</b></div>
+    <button class="btn" id="retryBtn">Зіграти ще</button>
+    <button class="btn secondary" id="shareBtn">Поділитись результатом</button>
+  </div>
+
+  <div class="footer-note">MEGA-TON · ENGINEERING SOLUTIONS</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var COLORS = { red:"#E53131", redDark:"#B72221", gray:"#6C6E6B", leak:"#2f6fd6", leakDark:"#1f4c99" };
+
+  var startScreen = document.getElementById('startScreen');
+  var gameScreen = document.getElementById('gameScreen');
+  var overScreen = document.getElementById('overScreen');
+  var startBtn = document.getElementById('startBtn');
+  var retryBtn = document.getElementById('retryBtn');
+  var shareBtn = document.getElementById('shareBtn');
+  var scoreEl = document.getElementById('score');
+  var livesEl = document.getElementById('lives');
+  var bestEl = document.getElementById('best');
+  var finalScoreEl = document.getElementById('finalScore');
+  var bestValEl = document.getElementById('bestVal');
+  var canvas = document.getElementById('canvas');
+  var ctx = canvas.getContext('2d');
+
+  var BEST_KEY = 'megaton_catch_best';
+  var best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10);
+
+  var W = 0, H = 0, DPR = 1;
+  function resize(){
+    var rect = gameScreen.getBoundingClientRect();
+    W = rect.width; H = rect.height;
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', function(){ setTimeout(resize, 200); });
+
+  function waveIconPath(scale){
+    var s = scale;
+    var p1 = new Path2D("M"+80*s+","+20*s+" C"+98.7*s+","+10*s+" "+116.3*s+","+30*s+" "+135*s+","+20*s+" C"+153.7*s+","+10*s+" "+171.3*s+","+30*s+" "+190*s+","+20*s);
+    var p2 = new Path2D("M"+40*s+","+60*s+" C"+65.5*s+","+48*s+" "+89.5*s+","+72*s+" "+115*s+","+60*s+" C"+140.5*s+","+48*s+" "+164.5*s+","+72*s+" "+190*s+","+60*s);
+    var p3 = new Path2D("M"+0*s+","+100*s+" C"+32.3*s+","+86*s+" "+62.7*s+","+114*s+" "+95*s+","+100*s+" C"+127.3*s+","+86*s+" "+157.7*s+","+114*s+" "+190*s+","+100*s);
+    return [p1,p2,p3];
+  }
+
+  // Player (collector)
+  var player = { x:0, y:0, w:74, h:20, targetX:0 };
+
+  // Game state
+  var state = 'idle'; // idle | playing | over
+  var score = 0, lives = 3, elapsed = 0, spawnTimer = 0, spawnInterval = 1.1;
+  var items = [];
+  var particles = [];
+  var shake = 0;
+
+  function livesHTML(){
+    var out = '';
+    for(var i=0;i<3;i++){
+      var filled = i < lives;
+      out += '<svg width="16" height="12" viewBox="0 0 200 140" style="opacity:'+(filled?1:0.25)+'">' +
+        '<path d="M80,20 C98.7,10 116.3,30 135,20 C153.7,10 171.3,30 190,20" stroke="#E53131" stroke-width="22" stroke-linecap="round" fill="none"/>' +
+        '<path d="M0,100 C32.3,86 62.7,114 95,100 C127.3,86 157.7,114 190,100" stroke="#E53131" stroke-width="22" stroke-linecap="round" fill="none"/>' +
+        '</svg>';
+    }
+    return out;
+  }
+
+  function resetGame(){
+    score = 0; lives = 3; elapsed = 0; spawnTimer = 0; spawnInterval = 1.1;
+    items = []; particles = []; shake = 0;
+    player.x = W/2; player.targetX = W/2; player.y = H - 46;
+    scoreEl.firstChild.nodeValue = '0';
+    livesEl.innerHTML = livesHTML();
+    bestEl.textContent = 'РЕКОРД: ' + best;
+  }
+
+  function spawnItem(){
+    var isBad = Math.random() < 0.32;
+    var isBonus = !isBad && Math.random() < 0.12;
+    var size = isBonus ? 30 : (isBad ? 24 : 26);
+    items.push({
+      x: 24 + Math.random() * (W - 48),
+      y: -30,
+      vy: 130 + Math.random()*70 + Math.min(elapsed*3, 140),
+      rot: 0,
+      spin: (Math.random()-0.5) * 1.6,
+      type: isBad ? 'bad' : (isBonus ? 'bonus' : 'good'),
+      size: size
+    });
+  }
+
+  function addParticles(x,y,color){
+    for(var i=0;i<10;i++){
+      var a = Math.random()*Math.PI*2, sp = 60+Math.random()*120;
+      particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:0.5,color:color});
+    }
+  }
+
+  function update(dt){
+    elapsed += dt;
+    spawnTimer += dt;
+    var curInterval = Math.max(0.42, spawnInterval - elapsed*0.01);
+    if(spawnTimer >= curInterval){
+      spawnTimer = 0;
+      spawnItem();
+    }
+
+    player.x += (player.targetX - player.x) * Math.min(1, dt*14);
+    player.x = Math.max(player.w/2, Math.min(W - player.w/2, player.x));
+
+    for(var i=items.length-1;i>=0;i--){
+      var it = items[i];
+      it.y += it.vy * dt;
+      it.rot += it.spin * dt;
+
+      var hitY = it.y >= player.y - 6 && it.y <= player.y + player.h + 10;
+      var hitX = Math.abs(it.x - player.x) < (player.w/2 + it.size*0.5);
+      if(hitY && hitX){
+        if(it.type === 'bad'){
+          lives--;
+          shake = 0.25;
+          addParticles(it.x, it.y, COLORS.leak);
+          livesEl.innerHTML = livesHTML();
+        } else {
+          var gain = it.type === 'bonus' ? 50 : 10;
+          score += gain;
+          scoreEl.firstChild.nodeValue = String(score);
+          addParticles(it.x, it.y, it.type==='bonus' ? '#f2c14e' : COLORS.red);
+        }
+        items.splice(i,1);
+        if(lives <= 0){ endGame(); return; }
+        continue;
+      }
+      if(it.y > H + 40){ items.splice(i,1); }
+    }
+
+    for(var j=particles.length-1;j>=0;j--){
+      var p = particles[j];
+      p.life -= dt; p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 260*dt;
+      if(p.life <= 0) particles.splice(j,1);
+    }
+
+    if(shake > 0) shake = Math.max(0, shake - dt);
+  }
+
+  function drawBackdrop(){
+    ctx.clearRect(0,0,W,H);
+    var g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#1c1d1f');
+    g.addColorStop(1,'#101112');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    ctx.save();
+    ctx.globalAlpha = 0.05;
+    ctx.strokeStyle = '#E53131';
+    ctx.lineWidth = 60;
+    for(var k=-2;k<8;k++){
+      ctx.beginPath();
+      ctx.moveTo(-100 + k*140, H+100);
+      ctx.lineTo(300 + k*140, -100);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawPlayer(){
+    var x = player.x, y = player.y, w = player.w, h = player.h;
+    ctx.save();
+    ctx.translate(x,y);
+    var grad = ctx.createLinearGradient(-w/2,0,w/2,0);
+    grad.addColorStop(0, COLORS.redDark);
+    grad.addColorStop(0.5, COLORS.red);
+    grad.addColorStop(1, COLORS.redDark);
+    ctx.fillStyle = grad;
+    roundRect(-w/2,-h/2,w,h,8);
+    ctx.fill();
+    ctx.fillStyle = '#2a2b2d';
+    ctx.beginPath(); ctx.arc(-w/2, 0, 7, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(w/2, 0, 7, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function drawItems(){
+    for(var i=0;i<items.length;i++){
+      var it = items[i];
+      ctx.save();
+      ctx.translate(it.x, it.y);
+      ctx.rotate(it.rot);
+      var s = it.size / 190;
+      if(it.type === 'bad'){
+        drawLeak(it.size);
+      } else {
+        ctx.translate(-it.size*0.5, -it.size*0.35);
+        var paths = waveIconPath(s);
+        ctx.strokeStyle = it.type === 'bonus' ? '#f2c14e' : COLORS.red;
+        ctx.lineWidth = 16*s;
+        ctx.lineCap = 'round';
+        for(var p=0;p<paths.length;p++) ctx.stroke(paths[p]);
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawLeak(size){
+    var s = size/40;
+    ctx.save();
+    ctx.scale(s,s);
+    ctx.translate(-20,-24);
+    ctx.beginPath();
+    ctx.moveTo(20,2);
+    ctx.bezierCurveTo(20,2, 4,22, 4,32);
+    ctx.arc(20,32,16,Math.PI,0,false);
+    ctx.bezierCurveTo(36,22,20,2,20,2);
+    ctx.closePath();
+    ctx.fillStyle = COLORS.leak;
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(15,26,4,7,0.4,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawParticles(){
+    for(var i=0;i<particles.length;i++){
+      var p = particles[i];
+      ctx.globalAlpha = Math.max(0, p.life/0.5);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,3,0,Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function draw(){
+    ctx.save();
+    if(shake > 0){
+      var mag = shake * 10;
+      ctx.translate((Math.random()-0.5)*mag, (Math.random()-0.5)*mag);
+    }
+    drawBackdrop();
+    drawItems();
+    drawPlayer();
+    drawParticles();
+    ctx.restore();
+  }
+
+  var lastT = 0;
+  function loop(t){
+    if(state !== 'playing'){ return; }
+    if(!lastT) lastT = t;
+    var dt = Math.min(0.05, (t - lastT)/1000);
+    lastT = t;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function endGame(){
+    state = 'over';
+    if(score > best){ best = score; localStorage.setItem(BEST_KEY, String(best)); }
+    finalScoreEl.lastChild.nodeValue = String(score);
+    bestValEl.textContent = best;
+    gameScreen.classList.add('hidden');
+    overScreen.classList.remove('hidden');
+  }
+
+  function startGame(){
+    startScreen.classList.add('hidden');
+    overScreen.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
+    resize();
+    resetGame();
+    state = 'playing';
+    lastT = 0;
+    requestAnimationFrame(loop);
+  }
+
+  // Controls
+  function pointerX(e){
+    var rect = canvas.getBoundingClientRect();
+    var cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    return cx;
+  }
+  canvas.addEventListener('pointerdown', function(e){ player.targetX = pointerX(e); });
+  canvas.addEventListener('pointermove', function(e){ if(e.pressure > 0 || e.buttons > 0){ player.targetX = pointerX(e); } });
+  canvas.addEventListener('touchstart', function(e){ player.targetX = pointerX(e); }, {passive:true});
+  canvas.addEventListener('touchmove', function(e){ player.targetX = pointerX(e); }, {passive:true});
+
+  var keys = {};
+  window.addEventListener('keydown', function(e){
+    if(['ArrowLeft','ArrowRight','a','d','A','D'].indexOf(e.key) !== -1) e.preventDefault();
+    keys[e.key] = true;
+  });
+  window.addEventListener('keyup', function(e){ keys[e.key] = false; });
+  setInterval(function(){
+    if(state !== 'playing') return;
+    var v = 260 * 0.016;
+    if(keys['ArrowLeft'] || keys['a'] || keys['A']) player.targetX -= v;
+    if(keys['ArrowRight'] || keys['d'] || keys['D']) player.targetX += v;
+    player.targetX = Math.max(0, Math.min(W, player.targetX));
+  }, 16);
+
+  startBtn.addEventListener('click', startGame);
+  retryBtn.addEventListener('click', startGame);
+  shareBtn.addEventListener('click', function(){
+    var text = 'Мій результат у грі МЕГАТОН: ' + score + ' очок! Спробуй побити рекорд 🔧';
+    if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.switchInlineQuery){
+      window.Telegram.WebApp.switchInlineQuery(text);
+    } else if(navigator.share){
+      navigator.share({ text: text, url: location.href }).catch(function(){});
+    } else if(navigator.clipboard){
+      navigator.clipboard.writeText(text + ' ' + location.href).then(function(){
+        shareBtn.textContent = 'Скопійовано!';
+        setTimeout(function(){ shareBtn.textContent = 'Поділитись результатом'; }, 1500);
+      });
+    }
+  });
+
+  if(window.Telegram && window.Telegram.WebApp){
+    try{
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
+    }catch(e){}
+  }
+
+  resize();
+  bestEl.textContent = 'РЕКОРД: ' + best;
+})();
+</script>
+</body>
+</html>
