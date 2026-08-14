@@ -89,6 +89,10 @@
     position:absolute; bottom:10px; left:0; right:0; text-align:center;
     color:#54554f; font-size:10.5px; letter-spacing:1px; z-index:5; pointer-events:none;
   }
+  #playCount{
+    position:absolute; bottom:26px; left:0; right:0; text-align:center;
+    color:#787a77; font-size:11px; font-weight:700; letter-spacing:.5px; z-index:5; pointer-events:none;
+  }
 </style>
 </head>
 <body>
@@ -150,6 +154,7 @@
     <button class="btn secondary" id="shareBtn">Поділитись результатом</button>
   </div>
 
+  <div id="playCount" class="hidden"></div>
   <div class="footer-note">MEGA-TON · ENGINEERING SOLUTIONS</div>
 </div>
 
@@ -170,11 +175,33 @@
   var bestEl = document.getElementById('best');
   var finalScoreEl = document.getElementById('finalScore');
   var bestValEl = document.getElementById('bestVal');
+  var playCountEl = document.getElementById('playCount');
   var canvas = document.getElementById('canvas');
   var ctx = canvas.getContext('2d');
 
   var BEST_KEY = 'megaton_catch_best';
   var best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10);
+
+  // Публічний лічильник запусків гри (без реєстрації, без бекенду)
+  var COUNTER_BASE = 'https://countapi.mileshilliard.com/api/v1';
+  var COUNTER_KEY = 'megaton_com_ua_floorheating_catch_game_plays_v1';
+  function showPlayCount(n){
+    if(typeof n !== 'number' || isNaN(n)) return;
+    playCountEl.textContent = 'Зіграно ігор: ' + n;
+    playCountEl.classList.remove('hidden');
+  }
+  function fetchPlayCount(){
+    fetch(COUNTER_BASE + '/get/' + COUNTER_KEY)
+      .then(function(r){ return r.json(); })
+      .then(function(d){ showPlayCount(d && d.value); })
+      .catch(function(){});
+  }
+  function bumpPlayCount(){
+    fetch(COUNTER_BASE + '/hit/' + COUNTER_KEY)
+      .then(function(r){ return r.json(); })
+      .then(function(d){ showPlayCount(d && d.value); })
+      .catch(function(){});
+  }
 
   var W = 0, H = 0, DPR = 1;
   function resize(){
@@ -499,6 +526,7 @@
     state = 'playing';
     lastT = 0;
     requestAnimationFrame(loop);
+    bumpPlayCount();
   }
 
   // Controls
@@ -551,6 +579,7 @@
 
   resize();
   bestEl.textContent = 'РЕКОРД: ' + best;
+  fetchPlayCount();
 })();
 </script>
 </body>
